@@ -53,7 +53,7 @@ void start_client(const char *ip, int port) {
     while (1) {
         printf("Escribe un mensaje: ");
         fgets(buffer, sizeof(buffer), stdin);
-        if (strncmp(buffer, "exit", 4) == 0) {
+        if (strncmp(buffer, "exit", 4) == 0) { //verifica si la primera palabra del buffer es exit, si es  asi se desconecta el cliente 
             break;
         }
         send(client_socket, buffer, strlen(buffer), 0);
