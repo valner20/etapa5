@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-#define MAX_CLIENTS 3
+#define MAX_CLIENTS 100
 
 typedef struct {
     int socket;
@@ -31,7 +31,7 @@ void broadcast_message(const char *message, int sender_socket) {
 
 void *handle_client(void *arg) {
     client_t *client = (client_t *)arg;
-    char buffer[1024];
+    char buffer[256];
 
     // Recibe el nombre del cliente
     memset(buffer, 0, sizeof(buffer));
@@ -51,13 +51,18 @@ void *handle_client(void *arg) {
         memset(buffer, 0, sizeof(buffer));
         int bytes_received = recv(client->socket, buffer, sizeof(buffer), 0);
         if (bytes_received <= 0) {
+            printf("Cliente desconectado con IP %s y nombre %s\n",
+                   inet_ntoa(client->address.sin_addr), client->name);
             close(client->socket);
             pthread_mutex_lock(&clients_mutex);
             for (int i = 0; i < num_clients; i++) {
                 if (clients[i]->socket == client->socket) {
-                    clients[i] = clients[num_clients - 1];
-                    num_clients--;
-                    break;
+                 // Reemplaza el cliente desconectado con el último y disminuye el contador
+                
+                 clients[i] = clients[num_clients - 1];
+                clients[num_clients - 1] = NULL;
+                num_clients--;
+                break;
                 }
             }
             pthread_mutex_unlock(&clients_mutex);
@@ -70,8 +75,8 @@ void *handle_client(void *arg) {
         printf("Mensaje recibido de %s (%s): %s\n", client->name, client_ip, buffer);
 
         // Preparar el mensaje para otros clientes
-        char message[1074];
-        snprintf(message, sizeof(message), "%s: %s", client->name, buffer);
+        char message[513];
+        snprintf(message, sizeof(message), "%s: %s", client->name, buffer); // guarda el mensaje en message
 
         broadcast_message(message, client->socket);
     }
@@ -88,7 +93,7 @@ void start_server(int port) {
 
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = inet_addr("192.168.1.162");
+    server_addr.sin_addr.s_addr = inet_addr("192.168.1.166");
     server_addr.sin_port = htons(port);
 
     if (bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
@@ -131,6 +136,6 @@ void start_server(int port) {
 }
 
 int main() {
-    start_server(12346);
+    start_server(8080);
     return 0;
 }

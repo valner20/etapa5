@@ -43,7 +43,7 @@ void start_client(const char *ip, int port) {
     char buffer[1024];
     printf("Ingrese su nombre: ");
     fgets(buffer, sizeof(buffer), stdin);
-    buffer[strcspn(buffer, "\n")] = '\0'; // Eliminar el salto de línea
+    buffer[strcspn(buffer, "\n")] = '\0'; // Eliminar el salto de línea que fgets siempre incluye
     send(client_socket, buffer, strlen(buffer), 0);
 
     pthread_t receive_thread;
@@ -53,10 +53,11 @@ void start_client(const char *ip, int port) {
     while (1) {
         printf("Escribe un mensaje: ");
         fgets(buffer, sizeof(buffer), stdin);
-        if (strncmp(buffer, "exit", 4) == 0) { //verifica si la primera palabra del buffer es exit, si es  asi se desconecta el cliente 
+        if (strncmp(buffer, "exit", 4) == 0) { //compara los primeros 4 caracteres con exit, si es exit se desconecta el cliente
             break;
         }
         send(client_socket, buffer, strlen(buffer), 0);
+        memset(buffer, 0, sizeof(buffer));
     }
 
     close(client_socket);
@@ -64,6 +65,6 @@ void start_client(const char *ip, int port) {
 
 int main() {
 
-    start_client("192.168.1.162", 12346);
+    start_client("192.168.1.166", 8080);
     return 0;
 }
